@@ -1,8 +1,8 @@
 import { useMemo } from "react";
 import DonutChart from "./components/DonutChart/DonutChart";
-import Table from "./components/table/Table";
 import data from "./data/grouped_findings.json";
 import colorHash from "./helper/colorHash";
+import Table from "./components/Table/Table";
 
 function App() {
   const mappedData = useMemo(() => {

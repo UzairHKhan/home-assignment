@@ -2,6 +2,7 @@ import {
   IconButton,
   Paper,
   Table,
+  LinearProgress,
   TableBody,
   TableCell,
   TableContainer,
@@ -12,11 +13,13 @@ import {
 import { useState } from "react";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
-import groupFindings from "../../data/grouped_findings.json";
-import rawFindings from "../../data/raw_findings.json";
+import groups from "../../data/grouped_findings.json";
+import rows from "../../data/raw_findings.json";
+import { styled } from "@mui/material/styles";
+import colors from "../../helper/colorHash";
 
-const groups = groupFindings;
-const rows = rawFindings;
+// const groups = groupFindings;
+// const rows = rawFindings;
 
 const RawFindingsTable = ({ expandibleRows }) => {
   // console.log("expandibleRows---> ", expandibleRows);
@@ -25,8 +28,9 @@ const RawFindingsTable = ({ expandibleRows }) => {
 
 const GroupFindingsTable = ({ groups, index, rows }) => {
   const [expand, setExpand] = useState(false);
-  const colors = {low: "#267cff", medium: "#F2BD14", high: "#ff6300", critical: "#ff000c"}
-  let rowFindings = rows.filter((row) => index + 1 === row.properties.grouped_finding_id)
+  let rowFindings = rows.filter(
+    (row) => index + 1 === row.properties.grouped_finding_id
+  );
 
   return (
     <>
@@ -40,47 +44,43 @@ const GroupFindingsTable = ({ groups, index, rows }) => {
             {expand ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
           </IconButton>
         </TableCell>
-        <TableCell sx={{ color: "#9dabb1", fontSize: "13px" }}>
-            <Typography 
-            variant="div" 
-            component="div" 
-            sx={{
-                width: "120px", 
-                height: "28px", 
-                color: "#ffff", 
-                background: `${colors[groups.severity]}`, 
-                borderRadius: "4px", 
-                justifyContent: "center", 
-                alignItems: "center", 
-                display: "flex"}}>
-                    {groups.severity}
-            </Typography>
-        </TableCell>
-        <TableCell sx={{ color: "#9dabb1", fontSize: "13px" }}>
-          {groups.grouped_finding_created}
-        </TableCell>
-        <TableCell sx={{ color: "#9dabb1", fontSize: "13px" }}>
-          {groups.description}
-        </TableCell>
-        <TableCell sx={{ color: "#9dabb1", fontSize: "13px" }}>
-          {groups.security_analyst}
-        </TableCell>
-        <TableCell sx={{ color: "#9dabb1", fontSize: "13px" }}>
-          {groups.owner}
-        </TableCell>
-        <TableCell sx={{ color: "#9dabb1", fontSize: "13px" }}>
-          {groups.workflow}
-        </TableCell>
-        <TableCell sx={{ color: "#9dabb1", fontSize: "13px" }}>
-          {groups.status}
-        </TableCell>
-        <TableCell sx={{ color: "#9dabb1", fontSize: "13px"}}>
-            {/* <Typography variant="div" component="div" sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}> */}
-                <Typography variant="div" component="div" sx={{ width: "35px", height: "35px", zIndex: "10", background: `${colors.low}`, display: "flex", alignItems: "center", justifyContent: "center", color: "#ffff", borderRadius: "4px"}}>
-                    {rowFindings.length}
-                </Typography>
-            {/* </Typography> */}
-        </TableCell>
+        <DataCells>
+          <Badge variant="div" component="div" groups={groups} colors={colors}>
+            {groups.severity}
+          </Badge>
+        </DataCells>
+        <DataCells>{groups.grouped_finding_created}</DataCells>
+        <DataCells>{groups.sla}</DataCells>
+        <DataCells>{groups.description}</DataCells>
+        <DataCells>{groups.security_analyst}</DataCells>
+        <DataCells>{groups.owner}</DataCells>
+        <DataCells>{groups.workflow}</DataCells>
+        <DataCells>
+          <ProgressBadgeContainer variant="div" component="div">
+            {groups.status === "in_progress" ? (
+              <LinearProgress
+                variant="determinate"
+                value={groups.progress * 100}
+                sx={{ width: "100%" }}
+              />
+            ) : (
+              <ProgressBadge variant="div" component="div" color={colors.low}>
+                {groups.status}
+              </ProgressBadge>
+            )}
+          </ProgressBadgeContainer>
+        </DataCells>
+        <DataCells>
+          <Badge
+            variant="div"
+            component="div"
+            width={35}
+            height={35}
+            colors={colors.low}
+          >
+            {rowFindings.length}
+          </Badge>
+        </DataCells>
         <TableCell></TableCell>
         <TableCell></TableCell>
       </TableRow>
@@ -103,38 +103,89 @@ const CreateTable = () => {
     "Security Analyst",
     "Owner",
     "Workflow",
+    "Status",
     "# of Findings",
     "Communications",
     "Action",
   ];
 
   return (
-      <TableContainer component={Paper} sx={{fontFamily: "Arial", padding: "1%", height: "50vh", overflowY: "auto"}}>
-        <Typography variant="h6" component="h6" sx={{fontFamily: "Arial" , color: "#4b4c64", fontWeight: "bold", marginLeft: "24px"}}>
-          Grouped Findings
-        </Typography>
-        <Table aria-label="collapsible table">
-          <TableHead>
-            <TableRow>
-              {headings.map((heading) => (
-                <TableCell sx={{ color: "#9dabb1", fontSize:"14px" }}>
-                  {heading.toLocaleUpperCase()}
-                </TableCell>
-              ))}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {groups.features.map((group, idx) => (
-              <GroupFindingsTable
-                key={`group${idx}`}
-                groups={group.properties}
-                index={idx}
-                rows={rows.features}
-              />
+    <ContainerTable component={Paper}>
+      <Table aria-label="collapsible table" stickyHeader={true}>
+      <TableHeding variant="h6" component="h6">
+        Grouped Findings
+      </TableHeding>
+        <TableHead>
+          <TableRow>
+            {headings.map((heading, idx) => (
+              <HeadingCell key={`${heading}${idx}`}>
+                {heading.toLocaleUpperCase()}
+              </HeadingCell>
             ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {groups.features.map((group, idx) => (
+            <GroupFindingsTable
+              key={`group${idx}`}
+              groups={group.properties}
+              index={idx}
+              rows={rows.features}
+            />
+          ))}
+        </TableBody>
+      </Table>
+    </ContainerTable>
   );
 };
+
+const DataCells = styled(TableCell)`
+  color: #9dabb1;
+  font-size: 13px;
+`;
+const HeadingCell = styled(TableCell)`
+  color: #9dabb1;
+  font-size: 14px;
+`;
+const Badge = styled(Typography)`
+  width: ${({ width }) => (width ? `${width}px` : "120px")};
+  height: ${({ height }) => (height ? `${height}px` : "28px")};
+  color: #ffff;
+  background: ${({ groups, colors }) =>
+    groups ? colors[groups.severity] : colors};
+  border-radius: 4px;
+  justify-content: center;
+  align-items: center;
+  display: flex;
+`;
+const ProgressBadgeContainer = styled(Typography)`
+  justify-content: space-between;
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+`;
+const ProgressBadge = styled(Typography)`
+  background: ${({ color }) => color};
+  height: 20px;
+  width: 120px;
+  border-radius: 4px;
+  color: #ffff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+`;
+const ContainerTable = styled(TableContainer)`
+  font-family: Arial;
+  width: auto;
+  padding: 1%;
+  height: 50vh;
+`;
+const TableHeding = styled(Typography)`
+  font-family: Arial;
+  color: #4b4c64;
+  font-weight: bold;
+  margin-left: 24px;
+`;
+
 export default CreateTable;
