@@ -1,8 +1,31 @@
+import { useMemo } from "react";
+import DonutChart from "./components/DonutChart/DonutChart";
 import Table from "./components/table/Table";
+import data from "./data/grouped_findings.json";
+import colorHash from "./helper/colorHash";
 
 function App() {
+  const mappedData = useMemo(() => {
+    const d = {};
+    data.features.forEach((f) => {
+      if (!d[f.properties.severity]) {
+        d[f.properties.severity] = {
+          name: f.properties.severity,
+          value: 0,
+          itemStyle: {
+            color: colorHash[f.properties.severity],
+          },
+        };
+      }
+      d[f.properties.severity].value += f.properties.progress;
+    });
+    return Object.values(d);
+  }, []);
   return (
-    <Table />
+    <>
+      <Table />
+      <DonutChart data={mappedData} />
+    </>
   );
 }
 
