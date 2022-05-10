@@ -9,6 +9,8 @@ import {
   TableHead,
   TableRow,
   Typography,
+  Collapse,
+  Box,
 } from "@mui/material";
 import { useState } from "react";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
@@ -18,15 +20,69 @@ import rows from "../../data/raw_findings.json";
 import { styled } from "@mui/material/styles";
 import colors from "../../helper/colorHash";
 
-// const groups = groupFindings;
-// const rows = rawFindings;
+const RawFindingsTable = ({ expandibleRows, expand }) => {
+  const headings = [
+    "",
+    "Severity",
+    "Time",
+    "Source",
+    "Description",
+    "Asset",
+    "Status",
+  ];
 
-const RawFindingsTable = ({ expandibleRows }) => {
-  // console.log("expandibleRows---> ", expandibleRows);
-  return;
+  return (
+    <Collapse in={expand} timeout="auto" unmountOnExit>
+      <Box sx={{ margin: 1 }}>
+        <TableHeding variant="h6" component="h6">
+          Raw Findings
+        </TableHeding>
+        <TableHead>
+          <TableRow>
+            {headings.map((heading, idx) => (
+              <HeadingCell key={`${heading}${idx}`}>
+                {heading.toLocaleUpperCase()}
+              </HeadingCell>
+            ))}
+          </TableRow>
+        </TableHead>
+        <TableBody sx={{ justifyContent: "space-between", flex: 1 }}>
+          {expandibleRows.map((row, idx) => (
+            <TableRow key={`${row}${idx}`}>
+              <DataCells />
+              <DataCells>
+                <Badge
+                  variant="div"
+                  component="div"
+                  properties={row.properties}
+                  colors={colors}
+                >
+                  {row.properties.severity}
+                </Badge>
+              </DataCells>
+              <DataCells>{row.properties.ticket_created}</DataCells>
+              <DataCells>{row.properties.source_security_tool_name}</DataCells>
+              <DataCells>{row.properties.description}</DataCells>
+              <DataCells>{row.properties.asset}</DataCells>
+              <DataCells>
+                <Badge
+                  variant="div"
+                  component="div"
+                  properties={row.properties}
+                  colors={colors}
+                >
+                  {row.properties.status}
+                </Badge>
+              </DataCells>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Box>
+    </Collapse>
+  );
 };
 
-const GroupFindingsTable = ({ groups, index, rows }) => {
+const GroupFindingsTable = ({ properties, index, rows }) => {
   const [expand, setExpand] = useState(false);
   let rowFindings = rows.filter(
     (row) => index + 1 === row.properties.grouped_finding_id
@@ -45,27 +101,32 @@ const GroupFindingsTable = ({ groups, index, rows }) => {
           </IconButton>
         </TableCell>
         <DataCells>
-          <Badge variant="div" component="div" groups={groups} colors={colors}>
-            {groups.severity}
+          <Badge
+            variant="div"
+            component="div"
+            properties={properties}
+            colors={colors}
+          >
+            {properties.severity}
           </Badge>
         </DataCells>
-        <DataCells>{groups.grouped_finding_created}</DataCells>
-        <DataCells>{groups.sla}</DataCells>
-        <DataCells>{groups.description}</DataCells>
-        <DataCells>{groups.security_analyst}</DataCells>
-        <DataCells>{groups.owner}</DataCells>
-        <DataCells>{groups.workflow}</DataCells>
+        <DataCells>{properties.grouped_finding_created}</DataCells>
+        <DataCells>{properties.sla}</DataCells>
+        <DataCells>{properties.description}</DataCells>
+        <DataCells>{properties.security_analyst}</DataCells>
+        <DataCells>{properties.owner}</DataCells>
+        <DataCells>{properties.workflow}</DataCells>
         <DataCells>
           <ProgressBadgeContainer variant="div" component="div">
-            {groups.status === "in_progress" ? (
+            {properties.status === "in_progress" ? (
               <LinearProgress
                 variant="determinate"
-                value={groups.progress * 100}
+                value={properties.progress * 100}
                 sx={{ width: "100%" }}
               />
             ) : (
               <ProgressBadge variant="div" component="div" color={colors.low}>
-                {groups.status}
+                {properties.status}
               </ProgressBadge>
             )}
           </ProgressBadgeContainer>
@@ -81,13 +142,13 @@ const GroupFindingsTable = ({ groups, index, rows }) => {
             {rowFindings.length}
           </Badge>
         </DataCells>
-        <TableCell></TableCell>
-        <TableCell></TableCell>
+        <TableCell />
+        <TableCell />
       </TableRow>
       <TableRow>
-        <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
-          <RawFindingsTable expandibleRows={rowFindings} />
-        </TableCell>
+        <DataCells sx={{ paddingBottom: 0, paddingTop: 0 }} colSpan={12}>
+          <RawFindingsTable expandibleRows={rowFindings} expand={expand} />
+        </DataCells>
       </TableRow>
     </>
   );
@@ -110,34 +171,39 @@ const CreateTable = () => {
   ];
 
   return (
-    <ContainerTable component={Paper}>
-      <Table aria-label="collapsible table" stickyHeader={true}>
+    <Paper>
       <TableHeding variant="h6" component="h6">
         Grouped Findings
       </TableHeding>
-        <TableHead>
-          <TableRow>
-            {headings.map((heading, idx) => (
-              <HeadingCell key={`${heading}${idx}`}>
-                {heading.toLocaleUpperCase()}
-              </HeadingCell>
+      <ContainerTable>
+        <GroupTable aria-label="collapsible table" stickyHeader={true}>
+          <TableHead>
+            <TableRow>
+              {headings.map((heading, idx) => (
+                <HeadingCell key={`${heading}${idx}`}>
+                  {heading.toLocaleUpperCase()}
+                </HeadingCell>
+              ))}
+            </TableRow>
+          </TableHead>
+          <TableBody sx={{ overflowY: "auto" }}>
+            {groups.features.map((group, idx) => (
+              <GroupFindingsTable
+                key={`group${idx}`}
+                properties={group.properties}
+                index={idx}
+                rows={rows.features}
+              />
             ))}
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {groups.features.map((group, idx) => (
-            <GroupFindingsTable
-              key={`group${idx}`}
-              groups={group.properties}
-              index={idx}
-              rows={rows.features}
-            />
-          ))}
-        </TableBody>
-      </Table>
-    </ContainerTable>
+          </TableBody>
+        </GroupTable>
+      </ContainerTable>
+    </Paper>
   );
 };
+
+const GroupTable = styled(Table)`
+`;
 
 const DataCells = styled(TableCell)`
   color: #9dabb1;
@@ -151,8 +217,8 @@ const Badge = styled(Typography)`
   width: ${({ width }) => (width ? `${width}px` : "120px")};
   height: ${({ height }) => (height ? `${height}px` : "28px")};
   color: #ffff;
-  background: ${({ groups, colors }) =>
-    groups ? colors[groups.severity] : colors};
+  background: ${({ properties, colors }) =>
+    properties ? colors[properties.severity] : colors ? colors : "#ffff"};
   border-radius: 4px;
   justify-content: center;
   align-items: center;
@@ -177,9 +243,9 @@ const ProgressBadge = styled(Typography)`
 `;
 const ContainerTable = styled(TableContainer)`
   font-family: Arial;
-  width: auto;
-  padding: 1%;
-  height: 50vh;
+  width: 100%;
+  max-height: 450px;
+
 `;
 const TableHeding = styled(Typography)`
   font-family: Arial;

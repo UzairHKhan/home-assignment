@@ -41,7 +41,6 @@ function DonutChart({ data }) {
     ],
   };
   const onReady = (e) => {
-    console.log(e);
     e.resize({
       width: "auto",
       height: "500px",
